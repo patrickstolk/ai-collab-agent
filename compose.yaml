@@ -1,0 +1,57 @@
+name: ai-collab-agent
+
+services:
+  app:
+    build: .
+    image: ai-collab-agent:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      SANDBOX_DIR: /sandbox-jobs
+      PORT: "3000"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - app-data:/data
+      - sandbox-jobs:/sandbox-jobs
+    # Alleen nodig voor Ollama op de host (OLLAMA_URL=http://host.docker.internal:11434)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    # Voorbeeld voor Traefik (pas aan en verwijder dan eventueel "ports"):
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.aca.rule=Host(`aca.example.lan`)
+    #   - traefik.http.routers.aca.entrypoints=websecure
+    #   - traefik.http.routers.aca.tls=true
+    #   - traefik.http.services.aca.loadbalancer.server.port=3000
+
+  sandbox:
+    build:
+      context: .
+      dockerfile: sandbox/Dockerfile
+    image: ai-collab-agent-sandbox:latest
+    restart: unless-stopped
+    network_mode: none          # geen enkele netwerktoegang voor geteste code
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    volumes:
+      - sandbox-jobs:/sandbox-jobs
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, KILL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+
+volumes:
+  app-data:
+  sandbox-jobs:
