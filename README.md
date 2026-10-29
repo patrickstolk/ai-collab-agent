@@ -55,10 +55,43 @@ Bewerk `.env` en zet minimaal:
 - `ADMIN_PASSWORD`: minimaal 12 tekens (of laat leeg en gebruik `/setup`, zie hieronder)
 - `APP_PORT`: de poort op de host (standaard 3000)
 
-Starten:
+Starten, met **optie A** (aanbevolen, kant-en-klare images van GitHub Packages) of **optie B** (zelf bouwen).
+
+**Optie A – images van ghcr.io.** De repository en de packages zijn privé, dus de server moet eenmalig inloggen.
+Maak op GitHub een *personal access token (classic)* met alleen het recht `read:packages`
+(Settings → Developer settings → Personal access tokens), en log daarmee in:
+
+```bash
+docker login ghcr.io -u patrickstolk
+```
+
+Plak het token als wachtwoord. Daarna:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Met `ACA_TAG` in `.env` kiest u de versie: `latest` (laatste release), een vaste versie zoals `1.0.0`,
+of `main` (laatste stand van de main-branch).
+
+**Optie B – zelf bouwen** (geen token nodig, wel de broncode op de server):
 
 ```bash
 docker compose up -d --build
+```
+
+### Hoe de packages ontstaan
+
+`.github/workflows/docker-publish.yml` draait bij iedere push naar `main`, bij iedere versietag (`v1.2.3`)
+en handmatig via *Actions → Docker-images publiceren → Run workflow*. Eerst draait `npm test`;
+alleen als alle tests slagen worden `ghcr.io/patrickstolk/ai-collab-agent` en
+`ghcr.io/patrickstolk/ai-collab-agent-sandbox` gebouwd (linux/amd64) en gepubliceerd.
+Een nieuwe release maakt u zo:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 Open `http://<server>:3000` en log in met `ADMIN_USER` / `ADMIN_PASSWORD`. Daarna kunt u
@@ -105,7 +138,8 @@ chmod 700 /mnt/user/appdata/ai-collab-agent/sandbox-jobs
 ### Bijwerken en back-up
 
 ```bash
-docker compose pull; docker compose up -d --build     # bijwerken
+docker compose pull && docker compose up -d           # bijwerken (optie A)
+git pull && docker compose up -d --build              # bijwerken (optie B)
 docker compose stop app
 docker run --rm -v ai-collab-agent_app-data:/data -v "$PWD":/backup alpine tar czf /backup/aca-backup.tgz -C /data .
 docker compose start app
@@ -213,6 +247,8 @@ Doorloop daarna de voorbeeldopdracht "Maak een kleine HTML-webpagina met een inv
 | Probleem | Oplossing |
 |---|---|
 | `env file .env not found` | `cp .env.example .env` |
+| `docker compose pull`: `denied` / `unauthorized` | Eerst `docker login ghcr.io -u patrickstolk` met een token met `read:packages` |
+| `manifest unknown` bij `ACA_TAG=latest` | `latest` bestaat pas na een versietag (`v*.*.*`); gebruik `ACA_TAG=main` of maak een release |
 | Kan niet inloggen / geen account | Zet `ADMIN_PASSWORD` (≥ 12 tekens) en herstart, of gebruik `/setup` met de code uit `docker compose exec app cat /data/SETUP_CODE.txt` |
 | "Te veel mislukte pogingen" | 15 minuten wachten (per IP). Achter een proxy: `TRUST_PROXY=true` |
 | "Ongeldig of verlopen formulier (CSRF)" | Pagina opnieuw laden; sessie verlopen → opnieuw inloggen |

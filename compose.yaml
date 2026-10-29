@@ -2,8 +2,9 @@ name: ai-collab-agent
 
 services:
   app:
+    # Kant-en-klare image van GitHub Packages; "docker compose up --build" bouwt lokaal.
+    image: ghcr.io/patrickstolk/ai-collab-agent:${ACA_TAG:-latest}
     build: .
-    image: ai-collab-agent:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -33,10 +34,10 @@ services:
     #   - traefik.http.services.aca.loadbalancer.server.port=3000
 
   sandbox:
+    image: ghcr.io/patrickstolk/ai-collab-agent-sandbox:${ACA_TAG:-latest}
     build:
       context: .
       dockerfile: sandbox/Dockerfile
-    image: ai-collab-agent-sandbox:latest
     restart: unless-stopped
     network_mode: none          # geen enkele netwerktoegang voor geteste code
     read_only: true
