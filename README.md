@@ -57,20 +57,16 @@ Bewerk `.env` en zet minimaal:
 
 Starten, met **optie A** (aanbevolen, kant-en-klare images van GitHub Packages) of **optie B** (zelf bouwen).
 
-**Optie A – images van ghcr.io.** De repository en de packages zijn privé, dus de server moet eenmalig inloggen.
-Maak op GitHub een *personal access token (classic)* met alleen het recht `read:packages`
-(Settings → Developer settings → Personal access tokens), en log daarmee in:
-
-```bash
-docker login ghcr.io -u patrickstolk
-```
-
-Plak het token als wachtwoord. Daarna:
+**Optie A – images van ghcr.io.** De packages zijn openbaar; inloggen is niet nodig:
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
+
+Maakt u de repository of de packages later privé, log dan eenmalig in met een *personal access token (classic)*
+met alleen het recht `read:packages` (Settings → Developer settings → Personal access tokens):
+`docker login ghcr.io -u patrickstolk`, en plak het token als wachtwoord.
 
 Met `ACA_TAG` in `.env` kiest u de versie: `latest` (laatste release), een vaste versie zoals `1.0.0`,
 of `main` (laatste stand van de main-branch).
@@ -247,7 +243,7 @@ Doorloop daarna de voorbeeldopdracht "Maak een kleine HTML-webpagina met een inv
 | Probleem | Oplossing |
 |---|---|
 | `env file .env not found` | `cp .env.example .env` |
-| `docker compose pull`: `denied` / `unauthorized` | Eerst `docker login ghcr.io -u patrickstolk` met een token met `read:packages` |
+| `docker compose pull`: `denied` / `unauthorized` | Packages zijn privé gemaakt: eerst `docker login ghcr.io -u patrickstolk` met een token met `read:packages` |
 | `manifest unknown` bij `ACA_TAG=latest` | `latest` bestaat pas na een versietag (`v*.*.*`); gebruik `ACA_TAG=main` of maak een release |
 | Kan niet inloggen / geen account | Zet `ADMIN_PASSWORD` (≥ 12 tekens) en herstart, of gebruik `/setup` met de code uit `docker compose exec app cat /data/SETUP_CODE.txt` |
 | "Te veel mislukte pogingen" | 15 minuten wachten (per IP). Achter een proxy: `TRUST_PROXY=true` |
